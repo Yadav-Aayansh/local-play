@@ -1,0 +1,159 @@
+/* Custom Styles */
+* {
+    font-family: 'Inter', sans-serif;
+}
+
+/* Smooth Animations */
+@keyframes fade-in {
+    from {
+        opacity: 0;
+    }
+    to {
+        opacity: 1;
+    }
+}
+
+@keyframes fade-in-up {
+    from {
+        opacity: 0;
+        transform: translateY(20px);
+    }
+    to {
+        opacity: 1;
+        transform: translateY(0);
+    }
+}
+
+.animate-fade-in {
+    animation: fade-in 0.6s ease-out;
+}
+
+.animate-fade-in-up {
+    animation: fade-in-up 0.8s ease-out;
+}
+
+/* Custom Scrollbar */
+::-webkit-scrollbar {
+    width: 8px;
+    height: 8px;
+}
+
+::-webkit-scrollbar-track {
+    background: rgba(255, 255, 255, 0.05);
+    border-radius: 10px;
+}
+
+::-webkit-scrollbar-thumb {
+    background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+    border-radius: 10px;
+}
+
+::-webkit-scrollbar-thumb:hover {
+    background: linear-gradient(135deg, #764ba2 0%, #667eea 100%);
+}
+
+/* Video Controls Styling */
+video::-webkit-media-controls-panel {
+    background: linear-gradient(to top, rgba(0,0,0,0.7), transparent);
+}
+
+video::-webkit-media-controls-play-button,
+video::-webkit-media-controls-mute-button,
+video::-webkit-media-controls-fullscreen-button {
+    filter: invert(1);
+}
+
+video::-webkit-media-controls-current-time-display,
+video::-webkit-media-controls-time-remaining-display {
+    color: white;
+    text-shadow: 0 1px 2px rgba(0,0,0,0.5);
+}
+
+/* Subtitle Text Enhancement */
+.subtitle-text {
+    text-shadow: 
+        2px 2px 4px rgba(0, 0, 0, 0.8),
+        -1px -1px 2px rgba(0, 0, 0, 0.5),
+        0 0 10px rgba(0, 0, 0, 0.5);
+    letter-spacing: 0.02em;
+}
+
+/* Glassmorphism Enhancement */
+.glass {
+    background: rgba(255, 255, 255, 0.05);
+    backdrop-filter: blur(10px);
+    -webkit-backdrop-filter: blur(10px);
+}
+
+/* Loading Animation */
+@keyframes pulse-ring {
+    0% {
+        transform: scale(0.5);
+        opacity: 0;
+    }
+    50% {
+        opacity: 1;
+    }
+    100% {
+        transform: scale(1.2);
+        opacity: 0;
+    }
+}
+
+.pulse-ring {
+    animation: pulse-ring 2s cubic-bezier(0.455, 0.03, 0.515, 0.955) infinite;
+}
+
+/* Hover Effects */
+button {
+    transition: all 0.3s cubic-bezier(0.4, 0, 0.2, 1);
+}
+
+button:active {
+    transform: scale(0.95);
+}
+
+/* Focus States */
+button:focus,
+input:focus {
+    outline: none;
+    box-shadow: 0 0 0 3px rgba(147, 51, 234, 0.3);
+}
+
+/* Gradient Text */
+.gradient-text {
+    background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+    -webkit-background-clip: text;
+    -webkit-text-fill-color: transparent;
+    background-clip: text;
+}
+
+/* Mobile Responsiveness */
+@media (max-width: 640px) {
+    .subtitle-text {
+        font-size: 1rem;
+        line-height: 1.5;
+    }
+}
+
+/* Dark Mode Video Player */
+video {
+    box-shadow: 0 20px 25px -5px rgba(0, 0, 0, 0.3);
+}
+
+/* Smooth Transitions */
+* {
+    transition: background-color 0.3s ease, border-color 0.3s ease;
+}
+
+/* Selection Color */
+::selection {
+    background-color: rgba(147, 51, 234, 0.3);
+    color: white;
+}
+
+/* Firefox */
+::-moz-selection {
+    background-color: rgba(147, 51, 234, 0.3);
+    color: white;
+}

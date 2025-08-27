@@ -1,0 +1,236 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>CineFlow - Modern Video Player with Subtitles</title>
+    
+    <!-- Tailwind CSS -->
+    <script src="https://cdn.tailwindcss.com"></script>
+    
+    <!-- Vue.js 3 -->
+    <script src="https://unpkg.com/vue@3/dist/vue.global.js"></script>
+    
+    <!-- Lucide Icons -->
+    <script src="https://unpkg.com/lucide@latest"></script>
+    
+    <!-- Custom Styles -->
+    <link rel="stylesheet" href="style.css">
+    
+    <!-- Google Fonts -->
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700;800&display=swap" rel="stylesheet">
+</head>
+<body>
+    <div id="app">
+        <!-- Gradient Background -->
+        <div class="fixed inset-0 bg-gradient-to-br from-slate-900 via-purple-900 to-slate-900"></div>
+        <div class="fixed inset-0 pattern-bg opacity-20"></div>
+        
+        <div class="relative min-h-screen p-4 md:p-8">
+            <!-- Header -->
+            <header class="text-center mb-8 animate-fade-in">
+                <div class="inline-flex items-center gap-3 mb-4">
+                    <div class="w-12 h-12 bg-gradient-to-tr from-purple-500 to-pink-500 rounded-xl flex items-center justify-center shadow-lg shadow-purple-500/25">
+                        <i data-lucide="play-circle" class="w-6 h-6 text-white"></i>
+                    </div>
+                    <h1 class="text-4xl md:text-5xl font-bold bg-gradient-to-r from-purple-400 via-pink-400 to-purple-400 bg-clip-text text-transparent">
+                        CineFlow
+                    </h1>
+                </div>
+                <p class="text-gray-400 text-sm md:text-base">Experience your videos with seamless subtitle integration</p>
+            </header>
+
+            <!-- Main Content -->
+            <div class="max-w-6xl mx-auto">
+                <!-- Upload Section -->
+                <div v-if="!videoUrl" class="animate-fade-in-up">
+                    <div class="bg-white/5 backdrop-blur-xl rounded-3xl p-8 md:p-12 border border-white/10 shadow-2xl">
+                        <div class="text-center space-y-6">
+                            <!-- Video Upload -->
+                            <div class="space-y-4">
+                                <div class="flex items-center justify-center gap-2 text-white/80">
+                                    <i data-lucide="film" class="w-5 h-5"></i>
+                                    <span class="text-lg font-medium">Select Your Video</span>
+                                </div>
+                                
+                                <div class="relative group">
+                                    <input 
+                                        type="file" 
+                                        @change="handleVideoUpload"
+                                        accept="video/mp4,video/mpeg,video/mov,video/avi,video/x-flv,video/mpg,video/webm,video/wmv,video/3gpp"
+                                        class="hidden"
+                                        ref="videoInput"
+                                        id="video-upload"
+                                    >
+                                    <label for="video-upload" class="block cursor-pointer">
+                                        <div class="border-2 border-dashed border-purple-500/30 rounded-2xl p-12 transition-all duration-300 hover:border-purple-500/60 hover:bg-purple-500/5 group-hover:scale-[1.02]">
+                                            <div class="flex flex-col items-center gap-4">
+                                                <div class="w-20 h-20 bg-gradient-to-tr from-purple-500 to-pink-500 rounded-2xl flex items-center justify-center shadow-lg shadow-purple-500/25 group-hover:scale-110 transition-transform">
+                                                    <i data-lucide="upload-cloud" class="w-10 h-10 text-white"></i>
+                                                </div>
+                                                <div>
+                                                    <p class="text-white text-lg font-medium mb-1">Drop your video here or click to browse</p>
+                                                    <p class="text-gray-400 text-sm">MP4, MOV, AVI, WebM, and more • Max 500MB</p>
+                                                </div>
+                                            </div>
+                                        </div>
+                                    </label>
+                                </div>
+                            </div>
+
+                            <!-- Subtitle Upload (Optional) -->
+                            <div class="pt-6 border-t border-white/10">
+                                <div class="flex items-center justify-center gap-2 text-white/80 mb-4">
+                                    <i data-lucide="subtitles" class="w-5 h-5"></i>
+                                    <span class="text-lg font-medium">Add Subtitles (Optional)</span>
+                                </div>
+                                
+                                <div class="relative">
+                                    <input 
+                                        type="file" 
+                                        @change="handleSubtitleUpload"
+                                        accept=".srt"
+                                        class="hidden"
+                                        id="subtitle-upload"
+                                        ref="subtitleInput"
+                                    >
+                                    <label for="subtitle-upload" class="inline-block cursor-pointer">
+                                        <div class="bg-gradient-to-r from-purple-500/20 to-pink-500/20 border border-purple-500/30 rounded-xl px-6 py-3 transition-all duration-300 hover:from-purple-500/30 hover:to-pink-500/30 hover:scale-105">
+                                            <div class="flex items-center gap-3">
+                                                <i data-lucide="file-text" class="w-5 h-5 text-purple-400"></i>
+                                                <span class="text-white font-medium">{{ subtitleFileName || 'Choose SRT File' }}</span>
+                                            </div>
+                                        </div>
+                                    </label>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+
+                    <!-- Features -->
+                    <div class="grid grid-cols-1 md:grid-cols-3 gap-4 mt-8">
+                        <div class="bg-white/5 backdrop-blur-xl rounded-2xl p-6 border border-white/10 hover:bg-white/10 transition-all duration-300 hover:scale-105 hover:shadow-xl">
+                            <div class="flex items-start gap-4">
+                                <div class="w-10 h-10 bg-purple-500/20 rounded-lg flex items-center justify-center flex-shrink-0">
+                                    <i data-lucide="zap" class="w-5 h-5 text-purple-400"></i>
+                                </div>
+                                <div>
+                                    <h3 class="text-white font-semibold mb-1">Lightning Fast</h3>
+                                    <p class="text-gray-400 text-sm">Instant playback with zero buffering</p>
+                                </div>
+                            </div>
+                        </div>
+                        
+                        <div class="bg-white/5 backdrop-blur-xl rounded-2xl p-6 border border-white/10 hover:bg-white/10 transition-all duration-300 hover:scale-105 hover:shadow-xl">
+                            <div class="flex items-start gap-4">
+                                <div class="w-10 h-10 bg-pink-500/20 rounded-lg flex items-center justify-center flex-shrink-0">
+                                    <i data-lucide="shield-check" class="w-5 h-5 text-pink-400"></i>
+                                </div>
+                                <div>
+                                    <h3 class="text-white font-semibold mb-1">100% Private</h3>
+                                    <p class="text-gray-400 text-sm">Your files never leave your device</p>
+                                </div>
+                            </div>
+                        </div>
+                        
+                        <div class="bg-white/5 backdrop-blur-xl rounded-2xl p-6 border border-white/10 hover:bg-white/10 transition-all duration-300 hover:scale-105 hover:shadow-xl">
+                            <div class="flex items-start gap-4">
+                                <div class="w-10 h-10 bg-purple-500/20 rounded-lg flex items-center justify-center flex-shrink-0">
+                                    <i data-lucide="sparkles" class="w-5 h-5 text-purple-400"></i>
+                                </div>
+                                <div>
+                                    <h3 class="text-white font-semibold mb-1">Smart Sync</h3>
+                                    <p class="text-gray-400 text-sm">Perfect subtitle synchronization</p>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+
+                <!-- Video Player Section -->
+                <div v-else class="animate-fade-in">
+                    <div class="bg-black/40 backdrop-blur-xl rounded-3xl overflow-hidden border border-white/10 shadow-2xl">
+                        <!-- Video Info Bar -->
+                        <div class="bg-white/5 backdrop-blur-xl px-6 py-4 border-b border-white/10">
+                            <div class="flex items-center justify-between">
+                                <div class="flex items-center gap-3">
+                                    <div class="w-2 h-2 bg-green-500 rounded-full animate-pulse"></div>
+                                    <span class="text-white font-medium">{{ videoFileName }}</span>
+                                </div>
+                                <button 
+                                    @click="resetPlayer"
+                                    class="text-gray-400 hover:text-white transition-colors duration-200 flex items-center gap-2 px-3 py-1.5 rounded-lg hover:bg-white/10"
+                                >
+                                    <i data-lucide="x" class="w-4 h-4"></i>
+                                    <span class="text-sm">Close</span>
+                                </button>
+                            </div>
+                        </div>
+                        
+                        <!-- Video Container -->
+                        <div class="relative bg-black aspect-video">
+                            <video 
+                                ref="videoPlayer"
+                                :src="videoUrl"
+                                controls
+                                class="w-full h-full"
+                                @timeupdate="updateSubtitles"
+                                @loadedmetadata="handleVideoLoaded"
+                            >
+                                Your browser does not support the video tag.
+                            </video>
+                            
+                            <!-- Subtitle Display -->
+                            <div v-if="currentSubtitle" class="absolute bottom-20 left-0 right-0 text-center px-4 pointer-events-none">
+                                <div class="inline-block bg-black/80 backdrop-blur-sm rounded-lg px-6 py-3 max-w-4xl">
+                                    <p class="text-white text-lg md:text-xl font-medium leading-relaxed subtitle-text">
+                                        {{ currentSubtitle }}
+                                    </p>
+                                </div>
+                            </div>
+                        </div>
+                        
+                        <!-- Controls Bar -->
+                        <div class="bg-white/5 backdrop-blur-xl px-6 py-4 border-t border-white/10">
+                            <div class="flex items-center justify-between">
+                                <div class="flex items-center gap-4">
+                                    <button 
+                                        @click="togglePlay"
+                                        class="w-10 h-10 bg-gradient-to-r from-purple-500 to-pink-500 rounded-lg flex items-center justify-center hover:scale-110 transition-transform shadow-lg shadow-purple-500/25"
+                                    >
+                                        <i :data-lucide="isPlaying ? 'pause' : 'play'" class="w-5 h-5 text-white"></i>
+                                    </button>
+                                    
+                                    <div class="text-white/60 text-sm font-mono">
+                                        {{ formatTime(currentTime) }} / {{ formatTime(duration) }}
+                                    </div>
+                                </div>
+                                
+                                <div class="flex items-center gap-3">
+                                    <button 
+                                        v-if="!subtitles.length && !subtitleFileName"
+                                        @click="triggerSubtitleUpload"
+                                        class="text-gray-400 hover:text-white transition-colors duration-200 flex items-center gap-2 px-3 py-1.5 rounded-lg hover:bg-white/10"
+                                    >
+                                        <i data-lucide="subtitles" class="w-4 h-4"></i>
+                                        <span class="text-sm">Add Subtitles</span>
+                                    </button>
+                                    
+                                    <div v-if="subtitleFileName" class="flex items-center gap-2 text-green-400 text-sm">
+                                        <i data-lucide="check-circle" class="w-4 h-4"></i>
+                                        <span>Subtitles Active</span>
+                                    </div>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <script src="script.js"></script>
+</body>
+</html>
