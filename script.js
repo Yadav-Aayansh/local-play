@@ -1,4 +1,4 @@
-const { createApp, ref, computed, onMounted, watch, nextTick } = Vue;
+const { createApp, ref, computed, onMounted, watch } = Vue;
 
 createApp({
     setup() {
@@ -9,7 +9,6 @@ createApp({
         const subtitles = ref([]);
         const currentSubtitle = ref('');
         const videoPlayer = ref(null);
-        const subtitleInput = ref(null);
         const isPlaying = ref(false);
         const currentTime = ref(0);
         const duration = ref(0);
@@ -18,55 +17,60 @@ createApp({
         const handleVideoUpload = (event) => {
             const file = event.target.files[0];
             if (file) {
-                // Validate file type
-                const validTypes = ['video/mp4', 'video/mpeg', 'video/quicktime', 'video/x-msvideo', 
-                                   'video/x-flv', 'video/webm', 'video/x-ms-wmv', 'video/3gpp'];
-                
-                if (!validTypes.includes(file.type) && !file.name.match(/\.(mp4|mpeg|mov|avi|flv|mpg|webm|wmv|3gp)$/i)) {
-                    alert('Please select a valid video file');
-                    return;
-                }
-
                 videoFileName.value = file.name;
                 videoUrl.value = URL.createObjectURL(file);
-                
-                // Reinitialize icons after DOM update
-                nextTick(() => {
-                    lucide.createIcons();
-                });
             }
         };
 
         // Handle subtitle upload
         const handleSubtitleUpload = (event) => {
             const file = event.target.files[0];
-            if (file && file.name.endsWith('.srt')) {
-                subtitleFileName.value = file.name;
-                const reader = new FileReader();
-                reader.onload = (e) => {
-                    parseSRT(e.target.result);
-                };
-                reader.readAsText(file);
+            if (!file) return;
+            
+            if (file.type !== 'application/x-subrip' && !file.name.endsWith('.srt')) {
+                alert('Please upload a valid SRT file');
+                return;
             }
+            
+            subtitleFileName.value = file.name;
+            
+            const reader = new FileReader();
+            reader.onload = (e) => {
+                const content = e.target.result;
+                const parsed = parseSRT(content);
+                console.log('Parsed subtitles:', parsed); // Debug log
+                subtitles.value = parsed;
+            };
+            reader.onerror = (e) => {
+                console.error('Error reading file:', e);
+                alert('Error reading subtitle file');
+            };
+            reader.readAsText(file);
+        };
+
+        const parseTime = (timeString) => {
+            const [hours, minutes, seconds] = timeString.split(':');
+            const [secs, millis] = seconds.split(',');
+            return parseInt(hours) * 3600 + parseInt(minutes) * 60 + parseInt(secs) + parseInt(millis) / 1000;
         };
 
         // Parse SRT file
         const parseSRT = (srtText) => {
-            const srtRegex = /(\d+)\s*\n\s*(\d{2}:\d{2}:\d{2},\d{3})\s*-->\s*(\d{2}:\d{2}:\d{2},\d{3})\s*\n\s*([\s\S]*?)(?=\n\s*\n|\s*$)/g;
+            const srtRegex = /(\d+)\n(\d{2}:\d{2}:\d{2},\d{3}) --> (\d{2}:\d{2}:\d{2},\d{3})\n([\s\S]*?)(?=\n\n|\n$|$)/g;
             const parsedSubtitles = [];
             let match;
-
+            
             while ((match = srtRegex.exec(srtText)) !== null) {
+                const [, , startTimeStr, endTimeStr, text] = match;
+                
                 parsedSubtitles.push({
-                    index: parseInt(match[1]),
-                    startTime: timeToSeconds(match[2]),
-                    endTime: timeToSeconds(match[3]),
-                    text: match[4].replace(/\n/g, ' ').trim()
+                    startTime: parseTime(startTimeStr),
+                    endTime: parseTime(endTimeStr),
+                    text: text.trim().replace(/\n/g, ' ')
                 });
             }
-
-            subtitles.value = parsedSubtitles;
-            console.log('Parsed subtitles:', parsedSubtitles.length);
+            
+            return parsedSubtitles; // Make sure this return statement exists
         };
 
         // Convert time format to seconds
@@ -83,22 +87,18 @@ createApp({
 
         // Update subtitles based on current time
         const updateSubtitles = () => {
-            if (!videoPlayer.value) return;
-            
-            currentTime.value = videoPlayer.value.currentTime;
-            isPlaying.value = !videoPlayer.value.paused;
-            
-            const current = subtitles.value.find(
-                sub => currentTime.value >= sub.startTime && currentTime.value <= sub.endTime
-            );
-            
-            currentSubtitle.value = current ? current.text : '';
-            
-            // Update play/pause icon
-            nextTick(() => {
-                lucide.createIcons();
-            });
-        };
+    if (!videoPlayer.value || subtitles.value.length === 0) return;
+    
+    currentTime.value = videoPlayer.value.currentTime;
+    isPlaying.value = !videoPlayer.value.paused;
+    
+    const current = subtitles.value.find(
+        sub => currentTime.value >= sub.startTime && currentTime.value <= sub.endTime
+    );
+    
+    currentSubtitle.value = current ? current.text : '';
+    console.log('Current subtitle:', currentSubtitle.value); // Debug log
+};
 
         // Handle video loaded
         const handleVideoLoaded = () => {
@@ -109,8 +109,7 @@ createApp({
 
         // Format time for display
         const formatTime = (seconds) => {
-            if (isNaN(seconds) || seconds === null || seconds === undefined) return '00:00';
-            
+            if (isNaN(seconds)) return '00:00';
             const h = Math.floor(seconds / 3600);
             const m = Math.floor((seconds % 3600) / 60);
             const s = Math.floor(seconds % 60);
@@ -126,16 +125,10 @@ createApp({
             if (videoPlayer.value) {
                 if (videoPlayer.value.paused) {
                     videoPlayer.value.play();
-                    isPlaying.value = true;
                 } else {
                     videoPlayer.value.pause();
-                    isPlaying.value = false;
                 }
-                
-                // Update icon
-                nextTick(() => {
-                    lucide.createIcons();
-                });
+                isPlaying.value = !videoPlayer.value.paused;
             }
         };
 
@@ -152,35 +145,50 @@ createApp({
             isPlaying.value = false;
             currentTime.value = 0;
             duration.value = 0;
-            
-            // Clear file inputs
-            const videoInput = document.getElementById('video-upload');
-            const subtitleInput = document.getElementById('subtitle-upload');
-            if (videoInput) videoInput.value = '';
-            if (subtitleInput) subtitleInput.value = '';
         };
 
         // Trigger subtitle upload from video player
         const triggerSubtitleUpload = () => {
-            const input = document.getElementById('subtitle-upload');
-            if (input) {
-                input.click();
+            // Create a temporary input element if the original is not accessible
+            let input = document.getElementById('subtitle-upload');
+            
+            if (!input) {
+                input = document.createElement('input');
+                input.type = 'file';
+                input.accept = '.srt';
+                input.style.display = 'none';
+                input.id = 'subtitle-upload-temp';
+                document.body.appendChild(input);
+                
+                input.addEventListener('change', handleSubtitleUpload);
+            }
+            
+            input.click();
+            
+            // Clean up temporary input after use
+            if (input.id === 'subtitle-upload-temp') {
+                setTimeout(() => {
+                    input.remove();
+                }, 1000);
             }
         };
 
         // Initialize Lucide icons
         onMounted(() => {
-            // Initial icon setup
             lucide.createIcons();
             
-            // Watch for DOM changes and reinitialize icons
-            const observer = new MutationObserver(() => {
-                lucide.createIcons();
+            // Re-initialize icons when video player appears
+            watch(videoUrl, () => {
+                setTimeout(() => {
+                    lucide.createIcons();
+                }, 100);
             });
-            
-            observer.observe(document.body, {
-                childList: true,
-                subtree: true
+
+            // Re-initialize icons after state changes
+            watch(isPlaying, () => {
+                setTimeout(() => {
+                    lucide.createIcons();
+                }, 10);
             });
         });
 
@@ -191,7 +199,6 @@ createApp({
             subtitles,
             currentSubtitle,
             videoPlayer,
-            subtitleInput,
             isPlaying,
             currentTime,
             duration,
